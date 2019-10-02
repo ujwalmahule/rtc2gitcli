@@ -48,14 +48,16 @@ public class RtcTagList implements Iterable<RtcTag> {
 			List<RtcChangeSet> orderedChangeSets = tag.getOrderedChangeSets();
 			int totalChangeSetsByBaseline = orderedChangeSets.size();
 			totalChangeSets += totalChangeSetsByBaseline;
-			output.writeLine("  Baseline [" + tag.getName() + "] with original name [" + tag.getOriginalName()
-					+ "] created at [" + (new Date(tag.getCreationDate())) + "] total number of changesets ["
-					+ totalChangeSetsByBaseline + "] will be tagged [" + tag.doCreateTag() + "]");
-			for (Entry<String, List<RtcChangeSet>> entry : tag.getComponentsChangeSets().entrySet()) {
-				output.writeLine("      number of changesets  for component [" + entry.getKey() + "] is ["
-						+ entry.getValue().size() + "]");
-			}
 			if (printChangesetDetails) {
+				output.writeLine("  Baseline [" + tag.getName() + "] with original name [" + tag.getOriginalName()
+						+ "] created at [" + (new Date(tag.getCreationDate())) + "] total number of changesets ["
+						+ totalChangeSetsByBaseline + "] will be tagged [" + tag.doCreateTag() + "]");
+
+				for (Entry<String, List<RtcChangeSet>> entry : tag.getComponentsChangeSets().entrySet()) {
+					output.writeLine("      number of changesets  for component [" + entry.getKey() + "] is ["
+							+ entry.getValue().size() + "]");
+				}
+
 				for (RtcChangeSet changeSet : orderedChangeSets) {
 					output.writeLine("        -- " + new Date(changeSet.getCreationDate()) + " : ["
 							+ changeSet.getCreatorName() + "] " + changeSet.getComment());
