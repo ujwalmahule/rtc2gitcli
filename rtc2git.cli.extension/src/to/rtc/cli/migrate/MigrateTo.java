@@ -67,7 +67,7 @@ public abstract class MigrateTo extends AbstractSubcommand implements ISubcomman
 	private StreamOutput output;
 	private boolean listTagsOnly = false;
 	private boolean newCache = false;
-	private String cacheDir;
+	private String cacheDir = null;
 	private File tagCacheFile;
 
 	private IProgressMonitor getMonitor() {
@@ -106,9 +106,11 @@ public abstract class MigrateTo extends AbstractSubcommand implements ISubcomman
 				output.writeLine("***** IS UPDATE MIGRATION *****");
 			}
 
-			cacheDir = subargs.getOption(MigrateToOptions.OPT_RTC_CACHE_DIR);
-			tagCacheFile = new File(cacheDir + File.separator + TAG_CACHE_FILE);
-			if (subargs.hasOption(MigrateToOptions.OPT_RTC_CLEAR_CACHE_DIR)) {
+			if (subargs.hasOption(MigrateToOptions.OPT_RTC_CACHE_DIR)) {
+				cacheDir = subargs.getOption(MigrateToOptions.OPT_RTC_CACHE_DIR);
+				tagCacheFile = new File(cacheDir + File.separator + TAG_CACHE_FILE);
+			}
+			if (cacheDir != null && subargs.hasOption(MigrateToOptions.OPT_RTC_CLEAR_CACHE_DIR)) {
 				if (tagCacheFile.exists()) {
 					if (!tagCacheFile.delete()) {
 						throw new RuntimeException("Cannot delete cache file");
@@ -157,7 +159,7 @@ public abstract class MigrateTo extends AbstractSubcommand implements ISubcomman
 			tagList.pruneInactiveTags();
 			tagList.pruneExcludedTags(getBaselineIncludePattern());
 
-			tagList.printTagList(true);
+			tagList.printTagList(listTagsOnly);
 
 			if (listTagsOnly) {
 				// Stop here before migration of any data
@@ -259,7 +261,7 @@ public abstract class MigrateTo extends AbstractSubcommand implements ISubcomman
 
 	private boolean hasCachedTags() {
 		boolean ret = false;
-		if (!newCache) {
+		if (cacheDir != null && !newCache) {
 			ret = tagCacheFile.exists();
 		}
 
@@ -326,7 +328,9 @@ public abstract class MigrateTo extends AbstractSubcommand implements ISubcomman
 
 			GetBaselinesDTO result = null;
 
-			openTagCacheWriter();
+			if (cacheDir != null) {
+				openTagCacheWriter();
+			}
 			try {
 				for (IComponentHandle component : componentHandles) {
 					parms.componentItemId = component.getItemId().getUuidValue();
@@ -338,14 +342,18 @@ public abstract class MigrateTo extends AbstractSubcommand implements ISubcomman
 						String baselineName = baseline.getName();
 						long creationDate = baseline.getCreationDate();
 						String uuid = baseline.getItemId();
-						addToCache(baselineName, creationDate, uuid);
+						if (cacheDir != null) {
+							addToCache(baselineName, creationDate, uuid);
+						}
 						RtcTag tag = new RtcTag(uuid).setCreationDate(creationDate).setOriginalName(baselineName);
 						tag = tagList.add(tag);
 					}
 				}
 			} finally {
 				try {
-					closeTagCacheWriter();
+					if (cacheDir != null) {
+						closeTagCacheWriter();
+					}
 				} catch (IOException e) {
 					throw new RuntimeException("Error creating tag cache", e);
 				}

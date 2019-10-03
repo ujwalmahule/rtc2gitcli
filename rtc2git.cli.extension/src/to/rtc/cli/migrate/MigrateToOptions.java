@@ -38,7 +38,7 @@ public class MigrateToOptions implements IOptionSource {
 		options.addOption(new NamedOptionDefinition(OPT_RTC_IS_UPDATE_MIGRATION, "U", "update", 0),
 				"Update the content of an already migrated workspace.");
 		options.addOption(new NamedOptionDefinition(OPT_RTC_CACHE_DIR, "x", "cachedir", 1), "Cache directory.");
-		options.addOption(new NamedOptionDefinition(OPT_RTC_CLEAR_CACHE_DIR, "y", "cleancachedir", 1),
+		options.addOption(new NamedOptionDefinition(OPT_RTC_CLEAR_CACHE_DIR, "y", "cleancachedir", 0),
 				"Clear cache directory, and rebuild new cache.");
 		return options;
 	}
