@@ -7,6 +7,8 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -437,7 +439,7 @@ public abstract class MigrateTo extends AbstractSubcommand implements ISubcomman
 					+ (System.currentTimeMillis() - startTime) / 1000 + "]s.");
 			output.writeLine("Parse the list of baselines and changesets.");
 			HistoryEntryVisitor visitor = new HistoryEntryVisitor(tagList, getLastChangeSetUuids(repo, sourceWs),
-					new ChangeLogStreamOutput(config.getContext().stdout()));
+					new ChangeLogStreamOutput(getOutputStream()));
 
 			startTime = System.currentTimeMillis();
 			visitor.acceptInto(changelog);
@@ -446,6 +448,24 @@ public abstract class MigrateTo extends AbstractSubcommand implements ISubcomman
 
 		} catch (TeamRepositoryException e) {
 			e.printStackTrace(output.getOutputStream());
+		}
+	}
+
+	private PrintStream getOutputStream() {
+		if (listTagsOnly) {
+			return config.getContext().stdout();
+		} else {
+			return new PrintStream(new OutputStream() {
+				@Override
+				public void write(int b) throws IOException {
+					// do not need the output of this visitor
+				}
+
+				@Override
+				public void write(byte[] b, int off, int len) throws IOException {
+					// do not need the output of this visitor
+				}
+			});
 		}
 	}
 
