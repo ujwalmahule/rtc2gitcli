@@ -83,4 +83,19 @@ final class RtcChangeSet implements ChangeSet {
 	public List<WorkItem> getWorkItems() {
 		return workItems;
 	}
+
+	public boolean isEqual(Object obj) {
+		if (obj instanceof RtcChangeSet) {
+			RtcChangeSet other = (RtcChangeSet) obj;
+			if (this.component.equals(other.component) && this.creationDate == other.creationDate
+					&& this.creatorName.equals(other.creatorName) && this.emailAddress.equals(other.emailAddress)
+					&& this.entryName.equals(other.entryName)) {
+				return true;
+			} else {
+				return false;
+			}
+		}
+
+		return super.equals(obj);
+	}
 }

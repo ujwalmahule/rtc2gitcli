@@ -71,6 +71,7 @@ public abstract class MigrateTo extends AbstractSubcommand implements ISubcomman
 	private boolean newCache = false;
 	private String cacheDir = null;
 	private File tagCacheFile;
+	private boolean doPush = false;
 
 	private IProgressMonitor getMonitor() {
 		return new LogTaskMonitor(new StreamOutput(config.getContext().stdout()));
@@ -101,6 +102,10 @@ public abstract class MigrateTo extends AbstractSubcommand implements ISubcomman
 			if (subargs.hasOption(MigrateToOptions.OPT_RTC_LIST_TAGS_ONLY)) {
 				listTagsOnly = true;
 				output.writeLine("***** LIST ONLY THE TAGS *****");
+			}
+
+			if (subargs.hasOption(MigrateToOptions.OPT_RTC_PUSH_GIT)) {
+				doPush = true;
 			}
 
 			if (subargs.hasOption(MigrateToOptions.OPT_RTC_IS_UPDATE_MIGRATION)) {
@@ -177,6 +182,7 @@ public abstract class MigrateTo extends AbstractSubcommand implements ISubcomman
 			}
 			Migrator migrator = getMigrator();
 			migrator.init(sandboxDirectory);
+			migrator.setDoPush(doPush);
 
 			Map<String, String> destinationWsComponents = RepoUtil.getComponentsInSandbox(
 					destinationWs.getItemId().getUuidValue(), new PathLocation(sandboxDirectory.getAbsolutePath()),

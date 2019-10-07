@@ -61,6 +61,7 @@ public final class GitMigrator implements Migrator {
 	private PersonIdent defaultIdent;
 	private File rootDir;
 	private CommitCommentTranslator commentTranslator;
+	private boolean doPush = false;
 
 	public GitMigrator(Properties properties) {
 		defaultCharset = Charset.forName("UTF-8");
@@ -68,6 +69,10 @@ public final class GitMigrator implements Migrator {
 		WindowCacheConfig = new WindowCacheConfig();
 		commitsAfterClean = 0;
 		initialize(properties);
+	}
+
+	public void setDoPush(boolean doPush) {
+		this.doPush = doPush;
 	}
 
 	private Charset getCharset() {
@@ -245,6 +250,18 @@ public final class GitMigrator implements Migrator {
 			// execute commit if something has changed
 			if (!toAdd.isEmpty() || !toRemove.isEmpty()) {
 				git.commit().setMessage(comment).setAuthor(ident).setCommitter(ident).call();
+			}
+
+			try {
+				if (doPush) {
+					git.push().call();
+				}
+			} catch (RuntimeException e) {
+				System.err.println("Git Push failed");
+				e.printStackTrace();
+			} catch (Exception e) {
+				System.err.println("Git Push failed");
+				e.printStackTrace();
 			}
 
 			++commitsAfterClean;

@@ -15,9 +15,9 @@
 	</classpathentry>
 	<classpathentry kind="src" output="bin_test" path="src_test">
 		<attributes>
+			<attribute name="test" value="true"/>
 			<attribute name="optional" value="true"/>
 			<attribute name="maven.pomderived" value="true"/>
-			<attribute name="test" value="true"/>
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="con" path="org.eclipse.m2e.MAVEN2_CLASSPATH_CONTAINER">
@@ -25,5 +25,6 @@
 			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
+	<classpathentry kind="lib" path="lib/jsch-0.1.53.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

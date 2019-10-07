@@ -29,4 +29,5 @@ public interface Migrator {
 
 	boolean needsIntermediateCleanup();
 
+	void setDoPush(boolean doPush);
 }
