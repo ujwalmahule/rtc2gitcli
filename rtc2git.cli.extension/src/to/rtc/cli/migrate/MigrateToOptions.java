@@ -19,7 +19,6 @@ public class MigrateToOptions implements IOptionSource {
 	public static final IOptionKey OPT_RTC_IS_UPDATE_MIGRATION = new OptionKey("updateMigration");
 	public static final IOptionKey OPT_RTC_CACHE_DIR = new OptionKey("cacheDir");
 	public static final IOptionKey OPT_RTC_CLEAR_CACHE_DIR = new OptionKey("clearCacheDir");
-	public static final IOptionKey OPT_RTC_PUSH_GIT = new OptionKey("pushGit");
 
 	@Override
 	public Options getOptions() throws ConflictingOptionException {
@@ -41,8 +40,6 @@ public class MigrateToOptions implements IOptionSource {
 		options.addOption(new NamedOptionDefinition(OPT_RTC_CACHE_DIR, "x", "cachedir", 1), "Cache directory.");
 		options.addOption(new NamedOptionDefinition(OPT_RTC_CLEAR_CACHE_DIR, "y", "cleancachedir", 0),
 				"Clear cache directory, and rebuild new cache.");
-		options.addOption(new NamedOptionDefinition(OPT_RTC_PUSH_GIT, "p", "push", 0),
-				"Push change sets to Git remote");
 		return options;
 	}
 }
