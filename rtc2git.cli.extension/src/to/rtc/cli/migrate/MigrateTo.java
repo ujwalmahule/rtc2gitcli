@@ -1,10 +1,7 @@
 package to.rtc.cli.migrate;
 
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -65,12 +62,8 @@ import com.ibm.team.scm.common.IWorkspaceHandle;
 @SuppressWarnings("restriction")
 public abstract class MigrateTo extends AbstractSubcommand implements ISubcommand {
 
-	private static final String TAG_CACHE_FILE = "tagCache.txt";
 	private StreamOutput output;
 	private boolean listTagsOnly = false;
-	private boolean newCache = false;
-	private String cacheDir = null;
-	private File tagCacheFile;
 
 	private IProgressMonitor getMonitor() {
 		return new LogTaskMonitor(new StreamOutput(config.getContext().stdout()));
@@ -108,19 +101,6 @@ public abstract class MigrateTo extends AbstractSubcommand implements ISubcomman
 				output.writeLine("***** IS UPDATE MIGRATION *****");
 			}
 
-			if (subargs.hasOption(MigrateToOptions.OPT_RTC_CACHE_DIR)) {
-				cacheDir = subargs.getOption(MigrateToOptions.OPT_RTC_CACHE_DIR);
-				tagCacheFile = new File(cacheDir + File.separator + TAG_CACHE_FILE);
-			}
-			if (cacheDir != null && subargs.hasOption(MigrateToOptions.OPT_RTC_CLEAR_CACHE_DIR)) {
-				if (tagCacheFile.exists()) {
-					if (!tagCacheFile.delete()) {
-						throw new RuntimeException("Cannot delete cache file");
-					}
-				}
-				newCache = true;
-			}
-
 			final ScmCommandLineArgument sourceWsOption = ScmCommandLineArgument
 					.create(subargs.getOptionValue(MigrateToOptions.OPT_SRC_WS), config);
 			SubcommandUtil.validateArgument(sourceWsOption, ItemType.WORKSPACE);
@@ -139,14 +119,9 @@ public abstract class MigrateTo extends AbstractSubcommand implements ISubcomman
 					config);
 
 			RtcTagList tagList = null;
-			if (hasCachedTags()) {
-				output.writeLine("Create the list of baselines from cache");
-				tagList = getTagsFromCache();
-			} else {
-				output.writeLine("Get full history information from RTC. This could take a large amount of time.");
-				output.writeLine("Create the list of baselines");
-				tagList = createTagListFromBaselines(client, repo, sourceWs);
-			}
+			output.writeLine("Get full history information from RTC. This could take a large amount of time.");
+			output.writeLine("Create the list of baselines");
+			tagList = createTagListFromBaselines(client, repo, sourceWs);
 
 			output.writeLine("Get changeset information for all baselines");
 			addChangeSetInfo(tagList, repo, sourceWs, destinationWs);
@@ -215,61 +190,6 @@ public abstract class MigrateTo extends AbstractSubcommand implements ISubcomman
 		}
 	}
 
-	private RtcTagList getTagsFromCache() {
-		RtcTagList tagList = new RtcTagList(output);
-		FileReader reader = null;
-		BufferedReader buffer = null;
-		try {
-			reader = new FileReader(tagCacheFile);
-			buffer = new BufferedReader(reader);
-			String line;
-			while ((line = buffer.readLine()) != null) {
-				String params[] = line.split(";");
-				if (params.length == 3) {
-					String baselineName = params[0];
-					String uuid = params[1];
-					long creationDate = Long.parseLong(params[2]);
-
-					// print.println(baselineName + ";" + uuid + ";" + creationDate);
-					RtcTag tag = new RtcTag(uuid).setCreationDate(creationDate).setOriginalName(baselineName);
-					tagList.add(tag);
-				}
-			}
-		} catch (FileNotFoundException e) {
-			throw new RuntimeException("Tag cache file not found", e);
-		} catch (IOException e) {
-			throw new RuntimeException("Error reading tag cache", e);
-		} finally {
-			if (buffer != null) {
-				try {
-					buffer.close();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-			if (reader != null) {
-				try {
-					reader.close();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-		}
-
-		// add default tag
-		tagList.getHeadTag();
-		return tagList;
-	}
-
-	private boolean hasCachedTags() {
-		boolean ret = false;
-		if (cacheDir != null && !newCache) {
-			ret = tagCacheFile.exists();
-		}
-
-		return ret;
-	}
-
 	private void setStdOut() {
 		Class<?> c = LocalContext.class;
 		Field subargs;
@@ -330,34 +250,18 @@ public abstract class MigrateTo extends AbstractSubcommand implements ISubcomman
 
 			GetBaselinesDTO result = null;
 
-			if (cacheDir != null) {
-				openTagCacheWriter();
-			}
-			try {
-				for (IComponentHandle component : componentHandles) {
-					parms.componentItemId = component.getItemId().getUuidValue();
-					result = client.getBaselines(parms, getMonitor());
-					for (Object obj : result.getBaselineHistoryEntriesInWorkspace()) {
-						BaselineHistoryEntryDTO baselineEntry = (BaselineHistoryEntryDTO) obj;
-						BaselineDTO baseline = baselineEntry.getBaseline();
+			for (IComponentHandle component : componentHandles) {
+				parms.componentItemId = component.getItemId().getUuidValue();
+				result = client.getBaselines(parms, getMonitor());
+				for (Object obj : result.getBaselineHistoryEntriesInWorkspace()) {
+					BaselineHistoryEntryDTO baselineEntry = (BaselineHistoryEntryDTO) obj;
+					BaselineDTO baseline = baselineEntry.getBaseline();
 
-						String baselineName = baseline.getName();
-						long creationDate = baseline.getCreationDate();
-						String uuid = baseline.getItemId();
-						if (cacheDir != null) {
-							addToCache(baselineName, creationDate, uuid);
-						}
-						RtcTag tag = new RtcTag(uuid).setCreationDate(creationDate).setOriginalName(baselineName);
-						tag = tagList.add(tag);
-					}
-				}
-			} finally {
-				try {
-					if (cacheDir != null) {
-						closeTagCacheWriter();
-					}
-				} catch (IOException e) {
-					throw new RuntimeException("Error creating tag cache", e);
+					String baselineName = baseline.getName();
+					long creationDate = baseline.getCreationDate();
+					String uuid = baseline.getItemId();
+					RtcTag tag = new RtcTag(uuid).setCreationDate(creationDate).setOriginalName(baselineName);
+					tag = tagList.add(tag);
 				}
 			}
 			// add default tag
@@ -371,32 +275,6 @@ public abstract class MigrateTo extends AbstractSubcommand implements ISubcomman
 	FileWriter writer;
 	BufferedWriter buffer;
 	PrintWriter print;
-
-	private void openTagCacheWriter() {
-		try {
-			writer = new FileWriter(tagCacheFile);
-			buffer = new BufferedWriter(writer);
-			print = new PrintWriter(buffer);
-		} catch (IOException e) {
-			throw new RuntimeException("Cannot write tags to cache", e);
-		}
-	}
-
-	private void closeTagCacheWriter() throws IOException {
-		if (print != null) {
-			print.close();
-		}
-		if (buffer != null) {
-			buffer.close();
-		}
-		if (writer != null) {
-			writer.close();
-		}
-	}
-
-	private void addToCache(String baselineName, long creationDate, String uuid) {
-		print.println(baselineName + ";" + uuid + ";" + creationDate);
-	}
 
 	private void addChangeSetInfo(RtcTagList tagList, ITeamRepository repo, IWorkspace sourceWs,
 			IWorkspace destinationWs) {

@@ -17,8 +17,6 @@ public class MigrateToOptions implements IOptionSource {
 	public static final IOptionKey OPT_RTC_CONNECTION_TIMEOUT = new OptionKey("timeout");
 	public static final IOptionKey OPT_RTC_LIST_TAGS_ONLY = new OptionKey("listTagsOnly");
 	public static final IOptionKey OPT_RTC_IS_UPDATE_MIGRATION = new OptionKey("updateMigration");
-	public static final IOptionKey OPT_RTC_CACHE_DIR = new OptionKey("cacheDir");
-	public static final IOptionKey OPT_RTC_CLEAR_CACHE_DIR = new OptionKey("clearCacheDir");
 
 	@Override
 	public Options getOptions() throws ConflictingOptionException {
@@ -37,9 +35,6 @@ public class MigrateToOptions implements IOptionSource {
 				"List only all tags that would be migrated but do not migrate them.");
 		options.addOption(new NamedOptionDefinition(OPT_RTC_IS_UPDATE_MIGRATION, "U", "update", 0),
 				"Update the content of an already migrated workspace.");
-		options.addOption(new NamedOptionDefinition(OPT_RTC_CACHE_DIR, "x", "cachedir", 1), "Cache directory.");
-		options.addOption(new NamedOptionDefinition(OPT_RTC_CLEAR_CACHE_DIR, "y", "cleancachedir", 0),
-				"Clear cache directory, and rebuild new cache.");
 		return options;
 	}
 }
